@@ -917,51 +917,52 @@
       $("uploadAccountStatus").textContent = "Terhubung sebagai " + email;
     }
 
-    async function initializeMsal() {
-      if (!window.msal || !window.msal.PublicClientApplication) {
-        showLogin("Komponen login Microsoft gagal dimuat. Periksa koneksi internet.");
-        throw new Error("MSAL tidak tersedia.");
-      }
+     
+async function initializeMsal() {
+  if (!window.msal || !window.msal.PublicClientApplication) {
+    showLogin("Komponen login Microsoft gagal dimuat. Periksa koneksi internet.");
+    throw new Error("MSAL tidak tersedia.");
+  }
 
-      
-msalApp = new msal.PublicClientApplication(msalConfig);
-await msalApp.initialize();
+  try {
+    msalApp = new msal.PublicClientApplication(msalConfig);
+    await msalApp.initialize();
 
-const response = await msalApp.handleRedirectPromise();
+    const response = await msalApp.handleRedirectPromise();
 
-console.log("Hasil redirect:", response);
-console.log("Akun Microsoft:", msalApp.getAllAccounts());
-console.log("URL saat ini:", window.location.href);
+    console.log("Hasil redirect:", response);
+    console.log("Akun Microsoft:", msalApp.getAllAccounts());
+    console.log("URL saat ini:", window.location.href);
 
-if (response && response.account) {
-  account = response.account;
-  msalApp.setActiveAccount(account);
-}
-
-if (!account) {
-  account =
-    msalApp.getActiveAccount() ||
-    msalApp.getAllAccounts()[0] ||
-    null;
-}
-
-if (account) {
- msalApp.getAllAccounts()[0] || null;
-      }
-
-      if (account) {
-        msalApp.setActiveAccount(account);
-        try {
-          await getToken();
-          await enterApp();
-        } catch (error) {
-          console.warn("Sesi perlu login ulang:", error);
-          showLogin("Silakan masuk kembali untuk melanjutkan.");
-        }
-      } else {
-        showLogin();
-      }
+    if (response && response.account) {
+      account = response.account;
+    } else {
+      account =
+        msalApp.getActiveAccount() ||
+        msalApp.getAllAccounts()[0] ||
+        null;
     }
+
+    if (!account) {
+      showLogin();
+      return;
+    }
+
+    msalApp.setActiveAccount(account);
+
+    try {
+      await getToken();
+      await enterApp();
+    } catch (error) {
+      console.error("Gagal mendapatkan token:", error);
+      showLogin("Token Microsoft gagal diperoleh. Periksa Console.");
+    }
+  } catch (error) {
+    console.error("Inisialisasi MSAL gagal:", error);
+    showLogin(error.message || "Inisialisasi Microsoft gagal.");
+  }
+}
+
 
 async function getToken() {
   if (!msalApp) {
