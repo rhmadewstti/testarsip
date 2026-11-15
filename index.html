@@ -927,7 +927,12 @@
       await msalApp.initialize();
 
 const response = await msalApp.handleRedirectPromise();      if (response && response.account) {
-        account = response.account;
+        
+    console.log("Hasil redirect:", response);
+console.log("Akun Microsoft:", msalApp.getAllAccounts());
+console.log("URL saat ini:", window.location.href);
+    
+    account = response.account;
         msalApp.setActiveAccount(account);
       }
 
