@@ -24,338 +24,978 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --primary: #2478c8;
-      --primary-dark: #155da5;
-      --bg: #f4f7fb;
-      --text: #243247;
-      --muted: #8292a7;
-      --border: #e7edf4;
-    }
+    
+:root {
+  --primary: #2478c8;
+  --primary-dark: #155da5;
+  --bg: #f4f7fb;
+  --text: #243247;
+  --muted: #8292a7;
+  --border: #e7edf4;
 
-    * { box-sizing: border-box; }
+  --sidebar-width: 250px;
+  --content-padding: clamp(14px, 2.5vw, 30px);
+}
 
-    body {
-      margin: 0;
-      font-family: Inter, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-    button, input, select, textarea { font: inherit; }
-    button { cursor: pointer; }
-    .hidden { display: none !important; }
+html {
+  width: 100%;
+  min-height: 100%;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
 
-    .login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background:
-        radial-gradient(circle at 10% 10%, #d9eaff 0, transparent 35%),
-        radial-gradient(circle at 90% 90%, #dcefff 0, transparent 35%),
-        #f5f8fc;
-    }
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
 
-    .login-card {
-      width: 100%;
-      max-width: 450px;
-      padding: 38px;
-      border: 1px solid #e5edf6;
-      border-radius: 24px;
-      background: white;
-      box-shadow: 0 20px 65px #183b6012;
-    }
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  max-width: 100%;
+}
 
-    .ms-logo {
-      display: grid;
-      grid-template-columns: repeat(2, 13px);
-      grid-template-rows: repeat(2, 13px);
-      gap: 3px;
-    }
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
 
-    .ms-logo span:nth-child(1) { background: #f25022; }
-    .ms-logo span:nth-child(2) { background: #7fba00; }
-    .ms-logo span:nth-child(3) { background: #00a4ef; }
-    .ms-logo span:nth-child(4) { background: #ffb900; }
+img,
+svg,
+video {
+  max-width: 100%;
+}
 
-    .login-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      width: 100%;
-      padding: 14px 18px;
-      border: 0;
-      border-radius: 12px;
-      background: var(--primary);
-      color: white;
-      font-weight: 700;
-      transition: .2s;
-    }
+img {
+  height: auto;
+}
 
-    .login-button:hover { background: var(--primary-dark); }
-    .login-button:disabled { opacity: .6; cursor: wait; }
+.hidden {
+  display: none !important;
+}
 
-    .app-layout { min-height: 100vh; }
-    .sidebar {
-      position: fixed;
-      inset: 0 auto 0 0;
-      z-index: 40;
-      width: 250px;
-      padding: 24px 16px;
-      background: white;
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-    }
+/* =========================================
+   LOGIN
+========================================= */
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 10px 28px;
-      font-weight: 800;
-      font-size: 17px;
-    }
+.login-screen {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 36px);
 
-    .brand-icon {
-      display: grid;
-      place-items: center;
-      width: 42px;
-      height: 42px;
-      color: white;
-      background: var(--primary);
-      border-radius: 13px;
-    }
+  background:
+    linear-gradient(
+      rgba(10, 20, 40, 0.48),
+      rgba(10, 20, 40, 0.48)
+    ),
+    url("bg.jpeg");
 
-    .nav-label {
-      margin: 12px 10px 8px;
-      color: #a1adbd;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1.4px;
-    }
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+}
 
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      width: 100%;
-      padding: 12px 13px;
-      margin: 3px 0;
-      border: 0;
-      border-radius: 10px;
-      background: transparent;
-      color: #687a90;
-      text-align: left;
-      font-size: 13px;
-      font-weight: 600;
-    }
+.login-card {
+  width: 100%;
+  max-width: 450px;
+  min-width: 0;
+  padding: clamp(22px, 5vw, 38px);
 
-    .nav-link i { width: 19px; text-align: center; }
-    .nav-link:hover { background: #f4f8fc; color: var(--primary); }
-    .nav-link.active { background: #eaf4ff; color: var(--primary); }
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: clamp(16px, 3vw, 24px);
 
-    .sidebar-account {
-      margin-top: auto;
-      padding: 14px 10px 0;
-      border-top: 1px solid var(--border);
-    }
+  background: rgba(255, 255, 255, 0.56);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 
-    .main-area { margin-left: 250px; min-height: 100vh; }
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 17px 30px;
-      background: #ffffffed;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-    }
+  box-shadow: 0 20px 65px rgba(0, 0, 0, 0.2);
+}
 
-    .content { max-width: 1500px; margin: auto; padding: 30px; }
-    .page { display: none; }
-    .page.active { display: block; }
+.login-card h1 {
+  overflow-wrap: anywhere;
+}
 
-    .card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 22px;
-      box-shadow: 0 4px 16px #1d426008;
-    }
+.login-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
-    .stat-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      min-height: 125px;
-    }
+.login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 
-    .stat-icon {
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
-      font-size: 20px;
-    }
+  width: 100%;
+  min-height: 48px;
+  padding: 13px 16px;
 
-    .form-label {
-      display: block;
-      margin-bottom: 7px;
-      color: #52647a;
-      font-size: 12px;
-      font-weight: 700;
-    }
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
 
-    .form-control {
-      display: block;
-      width: 100%;
-      padding: 11px 13px;
-      border: 1px solid #dfe7f0;
-      border-radius: 10px;
-      outline: none;
-      background: white;
-      color: #243247;
-      font-size: 13px;
-    }
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
 
-    .form-control:focus {
-      border-color: #70afe9;
-      box-shadow: 0 0 0 3px #2478c81a;
-    }
+  transition: background 0.2s ease;
+}
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 15px;
-      border: 1px solid #dfe7f0;
-      border-radius: 10px;
-      background: white;
-      color: #52647a;
-      font-size: 12px;
-      font-weight: 700;
-    }
+.login-button:hover {
+  background: var(--primary-dark);
+}
 
-    .btn:hover { background: #f6f9fc; }
-    .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-    .btn-primary:hover { background: var(--primary-dark); color: white; }
-    .btn-danger { color: #c03939; border-color: #f3d9d9; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 
-    .table-wrap { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th {
-      padding: 13px 15px;
-      background: #f7f9fc;
-      color: #7d8da1;
-      text-align: left;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      white-space: nowrap;
-    }
-    td { padding: 14px 15px; border-bottom: 1px solid #edf1f6; }
-    tr:last-child td { border-bottom: 0; }
+.ms-logo {
+  display: grid;
+  grid-template-columns: repeat(2, 13px);
+  grid-template-rows: repeat(2, 13px);
+  gap: 3px;
+  flex-shrink: 0;
+}
 
-    .file-icon {
-      display: inline-grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: #edf5ff;
-      color: #2478c8;
-      flex-shrink: 0;
-    }
+.ms-logo span:nth-child(1) {
+  background: #f25022;
+}
 
-    .drop-zone {
-      padding: 36px 20px;
-      text-align: center;
-      border: 2px dashed #cbd9e8;
-      border-radius: 15px;
-      background: #f9fbfe;
-      transition: .2s;
-    }
+.ms-logo span:nth-child(2) {
+  background: #7fba00;
+}
 
-    .drop-zone.dragover { border-color: var(--primary); background: #edf6ff; }
-    .badge {
-      display: inline-block;
-      padding: 5px 9px;
-      border-radius: 20px;
-      background: #e8f7ee;
-      color: #20834a;
-      font-size: 10px;
-      font-weight: 800;
-    }
+.ms-logo span:nth-child(3) {
+  background: #00a4ef;
+}
 
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: #10243b80;
-    }
+.ms-logo span:nth-child(4) {
+  background: #ffb900;
+}
 
-    .modal-backdrop.show { display: flex; }
-    .modal-box {
-      width: 100%;
-      max-width: 560px;
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 24px;
-      border-radius: 18px;
-      background: white;
-      box-shadow: 0 25px 80px #0002;
-    }
+/* =========================================
+   LAYOUT UTAMA
+========================================= */
 
-    .folder-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 12px;
-      border: 0;
-      border-radius: 10px;
-      background: white;
-      text-align: left;
-    }
+.app-layout {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 
-    .folder-row:hover { background: #f0f6fd; }
-    .mobile-menu-button { display: none; }
-    .status-message { margin-top: 12px; font-size: 12px; }
-    .status-message.error { color: #c03939; }
-    .status-message.success { color: #21834a; }
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
 
-    @media (max-width: 900px) {
-      .sidebar { transform: translateX(-100%); transition: transform .2s; box-shadow: 10px 0 30px #183b6010; }
-      .sidebar.open { transform: translateX(0); }
-      .main-area { margin-left: 0; }
-      .mobile-menu-button { display: inline-flex; }
-      .content { padding: 20px; }
-      .topbar { padding: 14px 18px; }
-    }
+  width: var(--sidebar-width);
+  max-width: 88vw;
+  height: 100vh;
+  height: 100dvh;
 
-    @media (max-width: 600px) {
-      .content { padding: 15px; }
-      .login-card { padding: 26px 21px; }
-      .stat-card { min-height: 105px; padding: 16px; }
-      .stat-icon { width: 42px; height: 42px; }
-      .topbar-title { font-size: 15px; }
-    }
+  padding: 24px 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  background: white;
+  border-right: 1px solid var(--border);
+
+  display: flex;
+  flex-direction: column;
+
+  transition: transform 0.25s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 10px 28px;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.brand > div:last-child {
+  min-width: 0;
+}
+
+.brand-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 38px;
+}
+
+.nav-label {
+  margin: 12px 10px 8px;
+  color: #a1adbd;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 13px;
+  margin: 3px 0;
+
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #687a90;
+
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nav-link i {
+  width: 19px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.nav-link:hover {
+  background: #f4f8fc;
+  color: var(--primary);
+}
+
+.nav-link.active {
+  background: #eaf4ff;
+  color: var(--primary);
+}
+
+.sidebar-account {
+  margin-top: auto;
+  padding: 14px 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-account .flex {
+  min-width: 0;
+}
+
+.sidebar-account .min-w-0 {
+  min-width: 0;
+}
+
+.main-area {
+  min-width: 0;
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-left: var(--sidebar-width);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  width: 100%;
+  min-width: 0;
+  padding: 17px var(--content-padding);
+
+  background: rgba(255, 255, 255, 0.93);
+  border-bottom: 1px solid var(--border);
+
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.topbar > div {
+  min-width: 0;
+}
+
+.topbar-title {
+  overflow-wrap: anywhere;
+}
+
+.content {
+  width: 100%;
+  max-width: 1560px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: var(--content-padding);
+}
+
+.page {
+  display: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.page.active {
+  display: block;
+}
+
+.page > *,
+.card,
+.grid,
+.grid > *,
+.flex,
+.flex > * {
+  min-width: 0;
+}
+
+.card {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(15px, 2vw, 22px);
+
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px #1d426008;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.5vw, 16px);
+  min-height: 125px;
+}
+
+.stat-card > div:last-child {
+  min-width: 0;
+}
+
+.stat-card p {
+  overflow-wrap: anywhere;
+}
+
+.stat-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: clamp(40px, 4vw, 50px);
+  height: clamp(40px, 4vw, 50px);
+
+  border-radius: 14px;
+  font-size: 20px;
+}
+
+/* =========================================
+   FORM DAN TOMBOL
+========================================= */
+
+.form-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #52647a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 11px 13px;
+
+  border: 1px solid #dfe7f0;
+  border-radius: 10px;
+  outline: none;
+
+  background: white;
+  color: #243247;
+  font-size: 13px;
+}
+
+.form-control:focus {
+  border-color: #70afe9;
+  box-shadow: 0 0 0 3px #2478c81a;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 40px;
+  max-width: 100%;
+  padding: 10px 15px;
+
+  border: 1px solid #dfe7f0;
+  border-radius: 10px;
+  background: white;
+  color: #52647a;
+
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.btn i {
+  flex-shrink: 0;
+}
+
+.btn:hover {
+  background: #f6f9fc;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  color: white;
+}
+
+.btn-danger {
+  color: #c03939;
+  border-color: #f3d9d9;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-message {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.status-message.error {
+  color: #c03939;
+}
+
+.status-message.success {
+  color: #21834a;
+}
+
+.badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #e8f7ee;
+  color: #20834a;
+  font-size: 10px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   TABEL FILE DAN RIWAYAT
+========================================= */
+
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border-radius: 8px;
+}
+
+.table-wrap table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table-wrap th {
+  padding: 13px 15px;
+  background: #f7f9fc;
+  color: #7d8da1;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.table-wrap td {
+  padding: 14px 15px;
+  border-bottom: 1px solid #edf1f6;
+  vertical-align: middle;
+}
+
+.table-wrap tr:last-child td {
+  border-bottom: 0;
+}
+
+.table-wrap td .btn {
+  white-space: nowrap;
+}
+
+.file-icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
+  background: #edf5ff;
+  color: #2478c8;
+}
+
+.table-wrap td > div {
+  min-width: 0;
+}
+
+/* =========================================
+   UPLOAD
+========================================= */
+
+.drop-zone {
+  width: 100%;
+  padding: clamp(22px, 4vw, 36px) 16px;
+  text-align: center;
+
+  border: 2px dashed #cbd9e8;
+  border-radius: 15px;
+  background: #f9fbfe;
+
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.drop-zone.dragover {
+  border-color: var(--primary);
+  background: #edf6ff;
+}
+
+.drop-zone p {
+  overflow-wrap: anywhere;
+}
+
+#fileList > div {
+  min-width: 0;
+}
+
+#fileList > div > div {
+  min-width: 0;
+}
+
+#selectedFolder {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* =========================================
+   PEMILIH FOLDER / MODAL
+========================================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  padding: clamp(10px, 3vw, 20px);
+
+  background: #10243b80;
+  overflow-y: auto;
+}
+
+.modal-backdrop.show {
+  display: flex;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  max-height: 85dvh;
+
+  min-width: 0;
+  padding: clamp(16px, 3vw, 24px);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 25px 80px #0002;
+}
+
+.modal-box > * {
+  min-width: 0;
+}
+
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+
+  border: 0;
+  border-radius: 10px;
+  background: white;
+  text-align: left;
+}
+
+.folder-row:hover {
+  background: #f0f6fd;
+}
+
+.folder-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mobile-menu-button {
+  display: none;
+}
+
+/* =========================================
+   TABLET DAN LAPTOP KECIL
+========================================= */
+
+@media (max-width: 1100px) {
+  :root {
+    --sidebar-width: 225px;
+  }
+
+  .sidebar {
+    padding: 20px 12px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .topbar {
+    padding: 15px 20px;
+  }
+
+  .stat-card {
+    min-height: 110px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+}
+
+/* =========================================
+   TABLET / LAYAR DI BAWAH 900 PX
+========================================= */
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 250px;
+  }
+
+  .sidebar {
+    transform: translateX(-105%);
+    box-shadow: 10px 0 30px #183b6020;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-area {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    min-width: 42px;
+    padding: 10px;
+  }
+
+  .topbar {
+    gap: 12px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .stat-card {
+    min-height: 105px;
+  }
+}
+
+/* =========================================
+   HP
+========================================= */
+
+@media (max-width: 600px) {
+  .login-screen {
+    padding: 16px;
+    background-position: center;
+    background-attachment: scroll;
+  }
+
+  .login-card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .login-card .text-2xl {
+    font-size: 1.35rem;
+    line-height: 1.4;
+  }
+
+  .login-button {
+    gap: 9px;
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .sidebar {
+    width: min(290px, 88vw);
+    max-width: 88vw;
+    padding: 20px 14px;
+  }
+
+  .topbar {
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .topbar > div:first-child {
+    flex: 1 1 auto;
+    gap: 9px;
+  }
+
+  .topbar-title {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .topbar p {
+    overflow-wrap: anywhere;
+  }
+
+  .topbar > div:last-child {
+    flex: 0 1 auto;
+    gap: 6px;
+  }
+
+  .topbar .badge {
+    font-size: 9px;
+    padding: 5px 7px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .content {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 13px;
+  }
+
+  .stat-card {
+    min-height: 94px;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+    border-radius: 11px;
+  }
+
+  .stat-card .text-2xl {
+    font-size: 1.35rem;
+    line-height: 1.4;
+  }
+
+  .page h2 {
+    font-size: 1.15rem;
+    line-height: 1.5;
+  }
+
+  .page h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .btn {
+    min-height: 40px;
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+
+  .form-control {
+    font-size: 14px;
+  }
+
+  .drop-zone {
+    padding: 24px 12px;
+  }
+
+  .table-wrap table {
+    min-width: 680px;
+  }
+
+  .modal-backdrop {
+    align-items: center;
+    padding: 12px;
+  }
+
+  .modal-box {
+    max-height: 88vh;
+    max-height: 88dvh;
+    padding: 17px;
+    border-radius: 15px;
+  }
+
+  .modal-box h3 {
+    font-size: 16px;
+  }
+
+  .folder-row {
+    gap: 9px;
+    padding: 11px 9px;
+  }
+}
+
+/* =========================================
+   HP SEMPIT
+========================================= */
+
+@media (max-width: 380px) {
+  .login-screen {
+    padding: 10px;
+  }
+
+  .login-card {
+    padding: 20px 15px;
+  }
+
+  .topbar {
+    padding: 10px;
+  }
+
+  .topbar-title {
+    font-size: 14px;
+  }
+
+  .topbar .badge {
+    max-width: 85px;
+  }
+
+  .content {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 13px;
+  }
+
+  .stat-card {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .btn {
+    gap: 6px;
+    padding: 9px;
+  }
+
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal-box {
+    padding: 14px;
+  }
+}
+
+/* =========================================
+   AKSESIBILITAS DAN GERAKAN
+========================================= */
+
+@media (hover: hover) {
+  .btn,
+  .nav-link,
+  .folder-row {
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
   </style>
 </head>
 
@@ -366,16 +1006,16 @@
     <div class="login-card">
       <div class="flex justify-center mb-6">
         <div class="brand-icon" style="width:58px;height:58px;font-size:25px">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <img src="logo.png" alt="logo sd">
         </div>
       </div>
 
       <div class="text-center">
-        <p class="text-xs font-extrabold tracking-widest text-blue-600 mb-3">
+        <p class="text-xs font-extrabold tracking-widest text-white mb-2">
           MANAJEMEN DIGITAL SEKOLAH
         </p>
-        <h1 class="text-2xl font-extrabold text-slate-800">File Center OneDrive</h1>
-        <p class="mt-3 text-sm leading-6 text-slate-500">
+        <h1 class="text-3xl font-extrabold text-blue-600">File Center OneDrive</h1>
+        <p class="mt-3 text-xs leading-5 text-white">
           Masuk menggunakan akun Microsoft untuk mengakses dan mengelola arsip digital sekolah.
         </p>
       </div>
@@ -401,7 +1041,7 @@
 
       <p id="loginStatus" class="status-message text-center" role="status"></p>
 
-      <p class="mt-7 text-center text-xs leading-5 text-slate-400">
+      <p class="mt-7 text-center text-xs leading-5 text-blue-900">
         Akses hanya diberikan setelah autentikasi Microsoft berhasil.
         <br>File Center OneDrive · Arsip Digital Sekolah
       </p>
