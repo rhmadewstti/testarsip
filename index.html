@@ -950,31 +950,45 @@
       }
     }
 
-    async function getToken() {
-      if (!msalApp) throw new Error("Login Microsoft belum diinisialisasi.");
+async function getToken() {
+  if (!msalApp) {
+    throw new Error("Login Microsoft belum diinisialisasi.");
+  }
 
-      if (!account) {
-        account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
-      }
-      if (!account) throw new Error("Silakan masuk dengan Microsoft terlebih dahulu.");
+  account =
+    msalApp.getActiveAccount() ||
+    msalApp.getAllAccounts()[0] ||
+    account;
 
-      const request = { scopes: SCOPES, account };
+  if (!account) {
+    throw new Error("Silakan masuk dengan Microsoft terlebih dahulu.");
+  }
 
-      try {
-        const response = await msalApp.acquireTokenSilent(request);
-        accessToken = response.accessToken;
-        account = response.account || account;
-        return accessToken;
-      } catch (error) {
-        if (error instanceof msal.InteractionRequiredAuthError) {
-          const response = await msalApp.acquireTokenPopup(request);
-          accessToken = response.accessToken;
-          account = response.account || account;
-          return accessToken;
-        }
-        throw error;
-      }
+  const request = {
+    scopes: SCOPES,
+    account
+  };
+
+  try {
+    const response = await msalApp.acquireTokenSilent(request);
+
+    accessToken = response.accessToken;
+    account = response.account || account;
+
+    msalApp.setActiveAccount(account);
+
+    return accessToken;
+  } catch (error) {
+    if (error instanceof msal.InteractionRequiredAuthError) {
+      // Hindari popup bertumpuk. Microsoft akan mengalihkan
+      // halaman untuk menyelesaikan autentikasi.
+      await msalApp.acquireTokenRedirect(request);
+      return null;
     }
+
+    throw error;
+  }
+}
 
     async function graphRequest(url, options = {}) {
       if (!accessToken) await getToken();
@@ -1209,34 +1223,28 @@
        LOGIN DAN LOGOUT
        ========================================================== */
 
-    $("loginMicrosoft").addEventListener("click", async () => {
-      $("loginMicrosoft").disabled = true;
-      $("loginMicrosoft").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...';
-      showStatus("loginStatus", "Menghubungkan ke Microsoft...");
+$("loginMicrosoft").addEventListener("click", async () => {
+  if (!msalApp) {
+    showStatus("loginStatus", "Microsoft sedang disiapkan. Coba lagi sebentar.");
+    return;
+  }
 
-      try {
-        if (!msalApp) {
-          msalApp = new msal.PublicClientApplication(msalConfig);
-          await msalApp.initialize();
-        }
+  $("loginMicrosoft").disabled = true;
+  $("loginMicrosoft").innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...';
 
-        const response = await msalApp.loginPopup({
-          scopes: SCOPES,
-          prompt: "select_account"
-        });
+  showStatus("loginStatus", "Mengalihkan ke halaman Microsoft...");
 
-        account = response.account;
-        msalApp.setActiveAccount(account);
-        accessToken = response.accessToken || null;
-
-        await getToken();
-        await enterApp();
-        showStatus("loginStatus", "");
-      } catch (error) {
-        console.error(error);
-        showLogin(error.message || "Login gagal. Silakan coba kembali.");
-      }
+  try {
+    await msalApp.loginRedirect({
+      scopes: SCOPES,
+      prompt: "select_account"
     });
+  } catch (error) {
+    console.error("Login Microsoft gagal:", error);
+    showLogin(error.message || "Login gagal. Silakan coba kembali.");
+  }
+});
 
     async function logoutMicrosoft() {
       try {
@@ -1248,10 +1256,10 @@
         $("loginScreen").classList.remove("hidden");
 
         if (msalApp && oldAccount) {
-          await msalApp.logoutPopup({
-            account: oldAccount,
-            postLogoutRedirectUri: window.location.origin + window.location.pathname
-          });
+          await msalApp.logoutRedirect({
+  account: oldAccount,
+  postLogoutRedirectUri: window.location.origin + window.location.pathname
+});
         }
 
         driveItems = [];
