@@ -926,8 +926,7 @@
       msalApp = new msal.PublicClientApplication(msalConfig);
       await msalApp.initialize();
 
-      const response = await msalApp.handleRedirectPromise().catch(() => null);
-      if (response && response.account) {
+const response = await msalApp.handleRedirectPromise();      if (response && response.account) {
         account = response.account;
         msalApp.setActiveAccount(account);
       }
