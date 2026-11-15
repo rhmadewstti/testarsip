@@ -923,21 +923,30 @@
         throw new Error("MSAL tidak tersedia.");
       }
 
-      msalApp = new msal.PublicClientApplication(msalConfig);
-      await msalApp.initialize();
+      
+msalApp = new msal.PublicClientApplication(msalConfig);
+await msalApp.initialize();
 
-const response = await msalApp.handleRedirectPromise();      if (response && response.account) {
-        
-    console.log("Hasil redirect:", response);
+const response = await msalApp.handleRedirectPromise();
+
+console.log("Hasil redirect:", response);
 console.log("Akun Microsoft:", msalApp.getAllAccounts());
 console.log("URL saat ini:", window.location.href);
-    
-    account = response.account;
-        msalApp.setActiveAccount(account);
-      }
 
-      if (!account) {
-        account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+if (response && response.account) {
+  account = response.account;
+  msalApp.setActiveAccount(account);
+}
+
+if (!account) {
+  account =
+    msalApp.getActiveAccount() ||
+    msalApp.getAllAccounts()[0] ||
+    null;
+}
+
+if (account) {
+ msalApp.getAllAccounts()[0] || null;
       }
 
       if (account) {
