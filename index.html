@@ -6,7 +6,20 @@
   <title>File Center OneDrive</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library-for-js/2.35.0/msal-browser.min.js"></script>
+
+
+
+<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+<script>
+  if (typeof window.msal === "undefined") {
+    const fallback = document.createElement("script");
+    fallback.src = "https://alcdn.msftauth.net/browser/2.35.0/js/msal-browser.min.js";
+    fallback.onload = () => console.log("MSAL berhasil dimuat dari CDN cadangan");
+    fallback.onerror = () => console.error("Kedua CDN MSAL gagal dimuat");
+    document.head.appendChild(fallback);
+  }
+</script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
