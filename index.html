@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Center OneDrive</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library-for-js/2.35.0/msal-browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #2478c8;
+      --primary-dark: #155da5;
+      --bg: #f4f7fb;
+      --text: #243247;
+      --muted: #8292a7;
+      --border: #e7edf4;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 10% 10%, #d9eaff 0, transparent 35%),
+        radial-gradient(circle at 90% 90%, #dcefff 0, transparent 35%),
+        #f5f8fc;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 450px;
+      padding: 38px;
+      border: 1px solid #e5edf6;
+      border-radius: 24px;
+      background: white;
+      box-shadow: 0 20px 65px #183b6012;
+    }
+
+    .ms-logo {
+      display: grid;
+      grid-template-columns: repeat(2, 13px);
+      grid-template-rows: repeat(2, 13px);
+      gap: 3px;
+    }
+
+    .ms-logo span:nth-child(1) { background: #f25022; }
+    .ms-logo span:nth-child(2) { background: #7fba00; }
+    .ms-logo span:nth-child(3) { background: #00a4ef; }
+    .ms-logo span:nth-child(4) { background: #ffb900; }
+
+    .login-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      transition: .2s;
+    }
+
+    .login-button:hover { background: var(--primary-dark); }
+    .login-button:disabled { opacity: .6; cursor: wait; }
+
+    .app-layout { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      width: 250px;
+      padding: 24px 16px;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 10px 28px;
+      font-weight: 800;
+      font-size: 17px;
+    }
+
+    .brand-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      color: white;
+      background: var(--primary);
+      border-radius: 13px;
+    }
+
+    .nav-label {
+      margin: 12px 10px 8px;
+      color: #a1adbd;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      width: 100%;
+      padding: 12px 13px;
+      margin: 3px 0;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #687a90;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .nav-link i { width: 19px; text-align: center; }
+    .nav-link:hover { background: #f4f8fc; color: var(--primary); }
+    .nav-link.active { background: #eaf4ff; color: var(--primary); }
+
+    .sidebar-account {
+      margin-top: auto;
+      padding: 14px 10px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .main-area { margin-left: 250px; min-height: 100vh; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 17px 30px;
+      background: #ffffffed;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+
+    .content { max-width: 1500px; margin: auto; padding: 30px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 4px 16px #1d426008;
+    }
+
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 125px;
+    }
+
+    .stat-icon {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      font-size: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 7px;
+      color: #52647a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .form-control {
+      display: block;
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid #dfe7f0;
+      border-radius: 10px;
+      outline: none;
+      background: white;
+      color: #243247;
+      font-size: 13px;
+    }
+
+    .form-control:focus {
+      border-color: #70afe9;
+      box-shadow: 0 0 0 3px #2478c81a;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 15px;
+      border: 1px solid #dfe7f0;
+      border-radius: 10px;
+      background: white;
+      color: #52647a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .btn:hover { background: #f6f9fc; }
+    .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-dark); color: white; }
+    .btn-danger { color: #c03939; border-color: #f3d9d9; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      padding: 13px 15px;
+      background: #f7f9fc;
+      color: #7d8da1;
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    td { padding: 14px 15px; border-bottom: 1px solid #edf1f6; }
+    tr:last-child td { border-bottom: 0; }
+
+    .file-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #edf5ff;
+      color: #2478c8;
+      flex-shrink: 0;
+    }
+
+    .drop-zone {
+      padding: 36px 20px;
+      text-align: center;
+      border: 2px dashed #cbd9e8;
+      border-radius: 15px;
+      background: #f9fbfe;
+      transition: .2s;
+    }
+
+    .drop-zone.dragover { border-color: var(--primary); background: #edf6ff; }
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      background: #e8f7ee;
+      color: #20834a;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #10243b80;
+    }
+
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      width: 100%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 25px 80px #0002;
+    }
+
+    .folder-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      background: white;
+      text-align: left;
+    }
+
+    .folder-row:hover { background: #f0f6fd; }
+    .mobile-menu-button { display: none; }
+    .status-message { margin-top: 12px; font-size: 12px; }
+    .status-message.error { color: #c03939; }
+    .status-message.success { color: #21834a; }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); transition: transform .2s; box-shadow: 10px 0 30px #183b6010; }
+      .sidebar.open { transform: translateX(0); }
+      .main-area { margin-left: 0; }
+      .mobile-menu-button { display: inline-flex; }
+      .content { padding: 20px; }
+      .topbar { padding: 14px 18px; }
+    }
+
+    @media (max-width: 600px) {
+      .content { padding: 15px; }
+      .login-card { padding: 26px 21px; }
+      .stat-card { min-height: 105px; padding: 16px; }
+      .stat-icon { width: 42px; height: 42px; }
+      .topbar-title { font-size: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HALAMAN LOGIN: halaman utama disembunyikan sampai autentikasi berhasil -->
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="flex justify-center mb-6">
+        <div class="brand-icon" style="width:58px;height:58px;font-size:25px">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <p class="text-xs font-extrabold tracking-widest text-blue-600 mb-3">
+          MANAJEMEN DIGITAL SEKOLAH
+        </p>
+        <h1 class="text-2xl font-extrabold text-slate-800">File Center OneDrive</h1>
+        <p class="mt-3 text-sm leading-6 text-slate-500">
+          Masuk menggunakan akun Microsoft untuk mengakses dan mengelola arsip digital sekolah.
+        </p>
+      </div>
+
+      <div class="my-7 rounded-xl border border-blue-100 bg-blue-50 p-4">
+        <div class="flex items-start gap-3">
+          <i class="fa-solid fa-shield-halved mt-1 text-blue-600"></i>
+          <div>
+            <p class="text-sm font-bold text-slate-700">Login Microsoft</p>
+            <p class="mt-1 text-xs leading-5 text-slate-500">
+              File dan folder akan diambil dari OneDrive milik akun yang berhasil masuk.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <button id="loginMicrosoft" class="login-button">
+        <span class="ms-logo" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        Masuk dengan Microsoft
+      </button>
+
+      <p id="loginStatus" class="status-message text-center" role="status"></p>
+
+      <p class="mt-7 text-center text-xs leading-5 text-slate-400">
+        Akses hanya diberikan setelah autentikasi Microsoft berhasil.
+        <br>File Center OneDrive · Arsip Digital Sekolah
+      </p>
+    </div>
+  </section>
+
+  <!-- APLIKASI UTAMA -->
+  <div id="appScreen" class="app-layout hidden">
+
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-cloud"></i></div>
+        <div>
+          <div>File Center</div>
+          <div class="text-xs font-medium text-slate-400 mt-1">OneDrive Sekolah</div>
+        </div>
+      </div>
+
+      <div class="nav-label">MENU UTAMA</div>
+
+      <button class="nav-link active" data-page="dashboard">
+        <i class="fa-solid fa-chart-pie"></i> Dashboard
+      </button>
+      <button class="nav-link" data-page="onedrive">
+        <i class="fa-brands fa-microsoft"></i> File OneDrive
+      </button>
+      <button class="nav-link" data-page="upload">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Unggah Berkas
+      </button>
+      <button class="nav-link" data-page="history">
+        <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Upload
+      </button>
+      <button class="nav-link" data-page="settings">
+        <i class="fa-solid fa-gear"></i> Pengaturan
+      </button>
+
+      <div class="sidebar-account">
+        <div class="flex items-center gap-3">
+          <div class="brand-icon" style="width:38px;height:38px;border-radius:50%">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p id="sidebarName" class="truncate text-xs font-bold">Akun Microsoft</p>
+            <p id="sidebarEmail" class="truncate text-xs text-slate-400 mt-1">Memuat akun...</p>
+          </div>
+        </div>
+        <button id="logoutMicrosoft" class="btn btn-danger w-full mt-4">
+          <i class="fa-solid fa-right-from-bracket"></i> Keluar
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="flex items-center gap-3">
+          <button id="mobileMenuButton" class="btn mobile-menu-button" aria-label="Buka menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div>
+            <h1 id="headerTitle" class="topbar-title text-lg font-extrabold">Dashboard</h1>
+            <p class="text-xs text-slate-400 mt-1">Pusat pengelolaan arsip digital</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="badge"><i class="fa-solid fa-circle-check mr-1"></i> Terhubung</span>
+          <div class="hidden sm:block text-right">
+            <p id="topAccountName" class="text-xs font-bold">Akun Microsoft</p>
+            <p id="topAccountEmail" class="text-xs text-slate-400 mt-1"></p>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <section id="page-dashboard" class="page active">
+          <div class="mb-6">
+            <h2 class="text-xl font-extrabold">Selamat datang di File Center</h2>
+            <p class="mt-2 text-sm text-slate-500">
+              Ringkasan berkas dari akun OneDrive yang sedang digunakan.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div class="card stat-card">
+              <div class="stat-icon bg-blue-50 text-blue-600"><i class="fa-regular fa-file-lines"></i></div>
+              <div>
+                <p class="text-xs text-slate-400">File di folder aktif</p>
+                <p id="dashboardTotalFiles" class="mt-2 text-2xl font-extrabold">—</p>
+              </div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon bg-amber-50 text-amber-600"><i class="fa-regular fa-folder-open"></i></div>
+              <div>
+                <p class="text-xs text-slate-400">Folder di folder aktif</p>
+                <p id="dashboardTotalFolders" class="mt-2 text-2xl font-extrabold">—</p>
+              </div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon bg-green-50 text-green-600"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+              <div>
+                <p class="text-xs text-slate-400">Upload hari ini</p>
+                <p id="dashboardUploadsToday" class="mt-2 text-2xl font-extrabold">—</p>
+              </div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon bg-purple-50 text-purple-600"><i class="fa-solid fa-database"></i></div>
+              <div>
+                <p class="text-xs text-slate-400">Ukuran file di folder aktif</p>
+                <p id="dashboardStorageUsed" class="mt-2 text-2xl font-extrabold">—</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div class="card xl:col-span-2">
+              <div class="flex items-center justify-between gap-3 mb-5">
+                <div>
+                  <h3 class="font-extrabold">Berkas terbaru</h3>
+                  <p class="text-xs text-slate-400 mt-1">Isi folder OneDrive yang sedang dibuka</p>
+                </div>
+                <button class="btn" data-goto="onedrive">Lihat semua <i class="fa-solid fa-arrow-right"></i></button>
+              </div>
+              <div id="dashboardRecentFiles" class="space-y-3">
+                <p class="text-sm text-slate-400">Memuat berkas...</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="font-extrabold mb-2">Akses cepat</h3>
+              <p class="text-xs text-slate-400 mb-5">Kelola arsip dengan lebih mudah.</p>
+              <button class="btn w-full mb-3" data-goto="onedrive">
+                <i class="fa-regular fa-folder-open text-blue-500"></i> Jelajahi OneDrive
+              </button>
+              <button class="btn btn-primary w-full" data-goto="upload">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Unggah berkas
+              </button>
+              <div class="mt-6 rounded-xl bg-blue-50 p-4">
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+                <p class="mt-2 text-xs leading-5 text-slate-600">
+                  Statistik dashboard mengikuti isi folder yang sedang aktif, bukan total seluruh isi OneDrive.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FILE ONEDRIVE -->
+        <section id="page-onedrive" class="page">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-extrabold">File OneDrive</h2>
+              <p class="mt-2 text-sm text-slate-500">Jelajahi folder dan buka berkas dari akun Microsoft.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="goRoot" class="btn"><i class="fa-solid fa-house"></i> Folder utama</button>
+              <button id="refreshOneDrive" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Segarkan</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+              <div>
+                <p class="text-xs text-slate-400 mb-1">LOKASI SEKARANG</p>
+                <p id="folderBreadcrumb" class="font-bold text-sm">OneDrive</p>
+              </div>
+              <input id="oneDriveSearch" class="form-control md:max-w-xs" placeholder="Cari file atau folder...">
+            </div>
+
+            <div id="onedriveStatus" class="status-message"></div>
+            <div class="table-wrap mt-3">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>Jenis</th>
+                    <th>Ukuran</th>
+                    <th>Terakhir diubah</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="onedriveFileTable">
+                  <tr><td colspan="5" class="text-center text-slate-400 py-10">Memuat OneDrive...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- UPLOAD -->
+        <section id="page-upload" class="page">
+          <div class="mb-6">
+            <h2 class="text-xl font-extrabold">Unggah Berkas</h2>
+            <p class="mt-2 text-sm text-slate-500">Unggah dokumen langsung ke OneDrive akun yang sedang login.</p>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div class="card xl:col-span-2">
+              <form id="uploadForm">
+                <label class="form-label">Pilih berkas</label>
+                <div id="uploadArea" class="drop-zone">
+                  <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-500"></i>
+                  <p class="mt-4 font-bold">Tarik berkas ke sini</p>
+                  <p class="mt-2 text-xs text-slate-400">atau pilih berkas dari perangkat Chromebook</p>
+                  <label class="btn btn-primary mt-4">
+                    <i class="fa-solid fa-folder-open"></i> Pilih berkas
+                    <input id="fileInput" type="file" multiple class="hidden">
+                  </label>
+                </div>
+
+                <div class="mt-5">
+                  <div class="flex items-center justify-between gap-3 mb-3">
+                    <label class="form-label mb-0">Daftar berkas</label>
+                    <button id="clearFiles" type="button" class="text-xs font-bold text-red-500">Hapus pilihan</button>
+                  </div>
+                  <div id="fileList" class="space-y-2">
+                    <p class="text-xs text-slate-400">Belum ada berkas yang dipilih.</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <div>
+                    <label for="nama" class="form-label">Nama pengirim</label>
+                    <input id="nama" class="form-control" readonly>
+                  </div>
+                  <div>
+                    <label for="email" class="form-label">Email akun Microsoft</label>
+                    <input id="email" class="form-control" readonly>
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <label for="keterangan" class="form-label">Keterangan unggahan</label>
+                  <textarea id="keterangan" class="form-control" rows="3" placeholder="Contoh: Arsip kegiatan sekolah, dokumen administrasi, dan sebagainya"></textarea>
+                </div>
+
+                <div class="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="min-w-0">
+                      <p class="text-xs text-blue-500 font-bold">FOLDER TUJUAN</p>
+                      <p id="selectedFolder" class="mt-1 font-bold text-sm break-words">OneDrive (folder utama)</p>
+                    </div>
+                    <button id="chooseFolderButton" type="button" class="btn">
+                      <i class="fa-regular fa-folder-open"></i> Pilih folder
+                    </button>
+                  </div>
+                </div>
+
+                <button id="startUploadButton" type="submit" class="btn btn-primary w-full mt-5 py-3">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Unggah ke OneDrive
+                </button>
+                <p id="uploadStatus" class="status-message" role="status"></p>
+              </form>
+            </div>
+
+            <div class="card">
+              <h3 class="font-extrabold">Informasi unggahan</h3>
+              <div class="mt-5 space-y-4 text-xs text-slate-500 leading-5">
+                <div class="flex gap-3">
+                  <i class="fa-solid fa-circle-check text-green-500 mt-1"></i>
+                  <p>Pengunggahan menggunakan akun Microsoft yang sedang aktif.</p>
+                </div>
+                <div class="flex gap-3">
+                  <i class="fa-solid fa-folder text-blue-500 mt-1"></i>
+                  <p>Pilih folder tujuan sebelum memulai unggahan.</p>
+                </div>
+                <div class="flex gap-3">
+                  <i class="fa-solid fa-clock text-amber-500 mt-1"></i>
+                  <p>Riwayat unggahan dikirim ke Google Sheets apabila koneksi dan izin Apps Script tersedia.</p>
+                </div>
+                <div class="flex gap-3">
+                  <i class="fa-solid fa-shield-halved text-purple-500 mt-1"></i>
+                  <p>Jangan tutup halaman saat proses unggah sedang berjalan.</p>
+                </div>
+              </div>
+              <div class="mt-6 rounded-xl bg-slate-50 p-4">
+                <p class="text-xs font-bold text-slate-600">Status akun</p>
+                <p id="uploadAccountStatus" class="mt-2 text-xs text-green-600">Terhubung ke Microsoft</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIWAYAT -->
+        <section id="page-history" class="page">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+            <div>
+              <h2 class="text-xl font-extrabold">Riwayat Upload</h2>
+              <p class="mt-2 text-sm text-slate-500">Catatan unggahan yang dikirim ke Google Sheets.</p>
+            </div>
+            <button id="refreshHistory" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Muat ulang</button>
+          </div>
+
+          <div class="card">
+            <div id="historyStatus" class="status-message mb-3"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>Nama pengirim</th>
+                    <th>Nama file</th>
+                    <th>Folder tujuan</th>
+                    <th>Status</th>
+                    <th>File</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <tr><td colspan="6" class="text-center text-slate-400 py-10">Memuat riwayat...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- PENGATURAN -->
+        <section id="page-settings" class="page">
+          <div class="mb-6">
+            <h2 class="text-xl font-extrabold">Pengaturan</h2>
+            <p class="mt-2 text-sm text-slate-500">Informasi akun dan koneksi aplikasi.</p>
+          </div>
+
+          <div class="card max-w-3xl">
+            <div class="flex items-center gap-4 pb-5 border-b border-slate-100">
+              <div class="brand-icon" style="width:55px;height:55px;font-size:22px">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <div class="min-w-0">
+                <p id="settingsName" class="font-extrabold">Akun Microsoft</p>
+                <p id="settingsEmail" class="text-sm text-slate-400 mt-1 break-all"></p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 py-5">
+              <div>
+                <p class="text-xs text-slate-400">Status Microsoft</p>
+                <p class="mt-2 text-sm font-bold text-green-600"><i class="fa-solid fa-circle-check mr-1"></i> Terhubung</p>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400">Akses Graph API</p>
+                <p class="mt-2 text-sm font-bold">Files.ReadWrite</p>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-amber-50 p-4 text-xs text-amber-800 leading-5">
+              <i class="fa-solid fa-circle-info mr-1"></i>
+              Akun yang tersedia bergantung pada pengaturan aplikasi di Microsoft Entra. Jika ingin menggunakan akun pribadi dan akun sekolah, jenis akun yang didukung harus diatur dengan benar di portal Microsoft.
+            </div>
+
+            <button id="settingsLogout" class="btn btn-danger mt-5">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar dari akun
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL PEMILIH FOLDER -->
+  <div id="folderModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 class="text-lg font-extrabold">Pilih folder tujuan</h3>
+          <p class="text-xs text-slate-400 mt-2">Pilih folder OneDrive untuk menyimpan berkas.</p>
+        </div>
+        <button id="closeFolderModal" class="btn" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="mt-5 rounded-xl bg-slate-50 p-3">
+        <p class="text-xs text-slate-400">LOKASI</p>
+        <p id="folderPickerPath" class="mt-1 text-sm font-bold">OneDrive</p>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button id="folderPickerBack" class="btn"><i class="fa-solid fa-arrow-left"></i> Folder utama</button>
+        <button id="selectCurrentFolder" class="btn btn-primary ml-auto"><i class="fa-solid fa-check"></i> Pilih lokasi ini</button>
+      </div>
+
+      <div id="folderPickerList" class="mt-4 space-y-1">
+        <p class="text-sm text-slate-400">Memuat folder...</p>
+      </div>
+
+      <p id="folderPickerStatus" class="status-message"></p>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================
+       KONFIGURASI APLIKASI
+       Gunakan konfigurasi aplikasi Microsoft yang sudah dibuat.
+       ========================================================== */
+
+    const CLIENT_ID = "09fbce40-e7f5-48f7-8b74-6219f124e597";
+    const AUTHORITY = "https://login.microsoftonline.com/common/";
+    const GRAPH = "https://graph.microsoft.com/v1.0";
+    const SCOPES = ["User.Read", "Files.ReadWrite"];
+
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzGhZBfVfrT2xI5IecN-gEOb6Q472-rVIvLjHjffNnNQoFamHZQh_lFlAuJRee7ZjE8/exec";
+
+    const msalConfig = {
+      auth: {
+        clientId: CLIENT_ID,
+        authority: AUTHORITY,
+        redirectUri: window.location.origin + window.location.pathname
+      },
+      cache: {
+        cacheLocation: "sessionStorage",
+        storeAuthStateInCookie: false
+      }
+    };
+
+    let msalApp;
+    let account = null;
+    let accessToken = null;
+    let driveItems = [];
+    let currentFolderId = null;
+    let currentFolderName = "OneDrive";
+    let currentFolderPath = [];
+    let uploadTargetId = null;
+    let uploadTargetName = "OneDrive";
+    let pickerFolderId = null;
+    let pickerFolderName = "OneDrive";
+    let pickerFolderPath = [];
+    let selectedFiles = [];
+    let isUploading = false;
+
+    const $ = id => document.getElementById(id);
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function showStatus(id, message, type = "") {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = message;
+      el.className = "status-message" + (type ? " " + type : "");
+    }
+
+    function formatBytes(bytes) {
+      const n = Number(bytes || 0);
+      if (n < 1024) return n + " B";
+      if (n < 1024 ** 2) return (n / 1024).toFixed(1) + " KB";
+      if (n < 1024 ** 3) return (n / (1024 ** 2)).toFixed(1) + " MB";
+      return (n / (1024 ** 3)).toFixed(2) + " GB";
+    }
+
+    function formatDate(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+    }
+
+    function fileIcon(item) {
+      if (item.folder) return "fa-folder";
+      const ext = (item.name || "").split(".").pop().toLowerCase();
+      if (["doc", "docx"].includes(ext)) return "fa-file-word";
+      if (["xls", "xlsx", "csv"].includes(ext)) return "fa-file-excel";
+      if (["ppt", "pptx"].includes(ext)) return "fa-file-powerpoint";
+      if (["pdf"].includes(ext)) return "fa-file-pdf";
+      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "fa-file-image";
+      if (["zip", "rar", "7z"].includes(ext)) return "fa-file-zipper";
+      return "fa-file-lines";
+    }
+
+    function showLogin(message = "") {
+      $("appScreen").classList.add("hidden");
+      $("loginScreen").classList.remove("hidden");
+      $("loginMicrosoft").disabled = false;
+      $("loginMicrosoft").innerHTML = `
+        <span class="ms-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        Masuk dengan Microsoft
+      `;
+      showStatus("loginStatus", message, message ? "error" : "");
+    }
+
+    function showApp() {
+      $("loginScreen").classList.add("hidden");
+      $("appScreen").classList.remove("hidden");
+      updateAccountDisplay();
+    }
+
+    function updateAccountDisplay() {
+      if (!account) return;
+
+      const name = account.name || "Akun Microsoft";
+      const email = account.username || "";
+
+      $("sidebarName").textContent = name;
+      $("sidebarEmail").textContent = email;
+      $("topAccountName").textContent = name;
+      $("topAccountEmail").textContent = email;
+      $("settingsName").textContent = name;
+      $("settingsEmail").textContent = email;
+      $("nama").value = name;
+      $("email").value = email;
+      $("uploadAccountStatus").textContent = "Terhubung sebagai " + email;
+    }
+
+    async function initializeMsal() {
+      if (!window.msal || !window.msal.PublicClientApplication) {
+        showLogin("Komponen login Microsoft gagal dimuat. Periksa koneksi internet.");
+        throw new Error("MSAL tidak tersedia.");
+      }
+
+      msalApp = new msal.PublicClientApplication(msalConfig);
+      await msalApp.initialize();
+
+      const response = await msalApp.handleRedirectPromise().catch(() => null);
+      if (response && response.account) {
+        account = response.account;
+        msalApp.setActiveAccount(account);
+      }
+
+      if (!account) {
+        account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+      }
+
+      if (account) {
+        msalApp.setActiveAccount(account);
+        try {
+          await getToken();
+          await enterApp();
+        } catch (error) {
+          console.warn("Sesi perlu login ulang:", error);
+          showLogin("Silakan masuk kembali untuk melanjutkan.");
+        }
+      } else {
+        showLogin();
+      }
+    }
+
+    async function getToken() {
+      if (!msalApp) throw new Error("Login Microsoft belum diinisialisasi.");
+
+      if (!account) {
+        account = msalApp.getActiveAccount() || msalApp.getAllAccounts()[0] || null;
+      }
+      if (!account) throw new Error("Silakan masuk dengan Microsoft terlebih dahulu.");
+
+      const request = { scopes: SCOPES, account };
+
+      try {
+        const response = await msalApp.acquireTokenSilent(request);
+        accessToken = response.accessToken;
+        account = response.account || account;
+        return accessToken;
+      } catch (error) {
+        if (error instanceof msal.InteractionRequiredAuthError) {
+          const response = await msalApp.acquireTokenPopup(request);
+          accessToken = response.accessToken;
+          account = response.account || account;
+          return accessToken;
+        }
+        throw error;
+      }
+    }
+
+    async function graphRequest(url, options = {}) {
+      if (!accessToken) await getToken();
+
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: "Bearer " + accessToken
+        }
+      });
+
+      if (response.status === 401) {
+        accessToken = null;
+        await getToken();
+        return graphRequest(url, options);
+      }
+
+      if (!response.ok) {
+        let detail = "";
+        try {
+          const body = await response.json();
+          detail = body.error?.message || "";
+        } catch (_) {}
+        throw new Error(detail || `Microsoft Graph gagal (${response.status}).`);
+      }
+
+      if (response.status === 204) return null;
+      return response.json();
+    }
+
+    async function getChildren(folderId = null) {
+      let url = folderId
+        ? `${GRAPH}/me/drive/items/${encodeURIComponent(folderId)}/children?$top=200&$orderby=name`
+        : `${GRAPH}/me/drive/root/children?$top=200&$orderby=name`;
+
+      const all = [];
+      while (url) {
+        const result = await graphRequest(url);
+        all.push(...(result.value || []));
+        url = result["@odata.nextLink"] || null;
+      }
+      return all;
+    }
+
+    function normalizeItem(item) {
+      return {
+        id: item.id,
+        name: item.name || "Tanpa nama",
+        folder: Boolean(item.folder),
+        size: Number(item.size || 0),
+        modified: item.lastModifiedDateTime || "",
+        webUrl: item.webUrl || "",
+        mimeType: item.file?.mimeType || ""
+      };
+    }
+
+    async function enterApp() {
+      showApp();
+      updateAccountDisplay();
+
+      try {
+        await loadCurrentFolder();
+        await loadHistory();
+      } catch (error) {
+        showStatus("onedriveStatus", error.message || "Gagal memuat OneDrive.", "error");
+      }
+    }
+
+    async function loadCurrentFolder(folderId = currentFolderId, folderName = currentFolderName, path = currentFolderPath) {
+      showStatus("onedriveStatus", "Memuat isi OneDrive...");
+      $("onedriveFileTable").innerHTML = `
+        <tr><td colspan="5" class="text-center text-slate-400 py-10">
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat berkas...
+        </td></tr>`;
+
+      currentFolderId = folderId;
+      currentFolderName = folderName;
+      currentFolderPath = path;
+
+      try {
+        const rawItems = await getChildren(folderId);
+        driveItems = rawItems.map(normalizeItem);
+        $("folderBreadcrumb").textContent = path.length
+          ? "OneDrive / " + path.map(p => p.name).join(" / ")
+          : "OneDrive";
+
+        renderOneDrive();
+        updateDashboard();
+        showStatus("onedriveStatus", `${driveItems.length} item berhasil dimuat.`, "success");
+      } catch (error) {
+        showStatus("onedriveStatus", error.message, "error");
+        $("onedriveFileTable").innerHTML = `
+          <tr><td colspan="5" class="text-center text-red-500 py-10">${escapeHTML(error.message)}</td></tr>`;
+        throw error;
+      }
+    }
+
+    function renderOneDrive() {
+      const query = ($("oneDriveSearch").value || "").trim().toLowerCase();
+      const items = driveItems
+        .filter(item => item.name.toLowerCase().includes(query))
+        .sort((a, b) => Number(b.folder) - Number(a.folder) || a.name.localeCompare(b.name));
+
+      if (!items.length) {
+        $("onedriveFileTable").innerHTML = `
+          <tr><td colspan="5" class="text-center text-slate-400 py-10">Tidak ada file atau folder yang cocok.</td></tr>`;
+        return;
+      }
+
+      $("onedriveFileTable").innerHTML = items.map(item => `
+        <tr>
+          <td>
+            <div class="flex items-center gap-3 min-w-52">
+              <span class="file-icon ${item.folder ? "bg-amber-50 text-amber-500" : ""}">
+                <i class="fa-solid ${fileIcon(item)}"></i>
+              </span>
+              <span class="font-bold text-slate-700 break-all">${escapeHTML(item.name)}</span>
+            </div>
+          </td>
+          <td>${item.folder ? "Folder" : "Berkas"}</td>
+          <td>${item.folder ? "—" : formatBytes(item.size)}</td>
+          <td class="whitespace-nowrap">${formatDate(item.modified)}</td>
+          <td>
+            ${item.folder
+              ? `<button class="btn" data-open-folder="${escapeHTML(item.id)}" data-folder-name="${escapeHTML(item.name)}">
+                   <i class="fa-solid fa-folder-open"></i> Buka
+                 </button>`
+              : `<button class="btn" data-open-file="${escapeHTML(item.id)}">
+                   <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
+                 </button>`
+            }
+          </td>
+        </tr>
+      `).join("");
+
+      $("onedriveFileTable").querySelectorAll("[data-open-folder]").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.openFolder;
+          const name = button.dataset.folderName;
+          loadCurrentFolder(id, name, [...currentFolderPath, { id, name }]);
+        });
+      });
+
+      $("onedriveFileTable").querySelectorAll("[data-open-file]").forEach(button => {
+        button.addEventListener("click", () => {
+          const item = driveItems.find(x => x.id === button.dataset.openFile);
+          if (item?.webUrl) window.open(item.webUrl, "_blank", "noopener,noreferrer");
+          else showStatus("onedriveStatus", "Tautan berkas tidak tersedia.", "error");
+        });
+      });
+    }
+
+    function updateDashboard() {
+      const files = driveItems.filter(item => !item.folder);
+      const folders = driveItems.filter(item => item.folder);
+      const totalBytes = files.reduce((sum, item) => sum + item.size, 0);
+
+      $("dashboardTotalFiles").textContent = files.length;
+      $("dashboardTotalFolders").textContent = folders.length;
+      $("dashboardStorageUsed").textContent = formatBytes(totalBytes);
+
+      const recent = [...driveItems]
+        .sort((a, b) => new Date(b.modified || 0) - new Date(a.modified || 0))
+        .slice(0, 6);
+
+      $("dashboardRecentFiles").innerHTML = recent.length
+        ? recent.map(item => `
+          <div class="flex items-center gap-3">
+            <span class="file-icon ${item.folder ? "bg-amber-50 text-amber-500" : ""}">
+              <i class="fa-solid ${fileIcon(item)}"></i>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-bold">${escapeHTML(item.name)}</p>
+              <p class="mt-1 text-xs text-slate-400">${item.folder ? "Folder" : formatBytes(item.size)}</p>
+            </div>
+            <span class="text-xs text-slate-400 whitespace-nowrap">${formatDate(item.modified)}</span>
+          </div>
+        `).join("")
+        : `<p class="text-sm text-slate-400">Folder ini belum berisi file.</p>`;
+    }
+
+    function navigate(page) {
+      document.querySelectorAll(".page").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-link").forEach(el => el.classList.remove("active"));
+
+      const target = $("page-" + page);
+      if (!target) return;
+      target.classList.add("active");
+
+      const nav = document.querySelector(`.nav-link[data-page="${page}"]`);
+      if (nav) nav.classList.add("active");
+
+      const titles = {
+        dashboard: "Dashboard",
+        onedrive: "File OneDrive",
+        upload: "Unggah Berkas",
+        history: "Riwayat Upload",
+        settings: "Pengaturan"
+      };
+
+      $("headerTitle").textContent = titles[page] || "File Center";
+      $("sidebar").classList.remove("open");
+
+      if (page === "history") loadHistory();
+      if (page === "onedrive") loadCurrentFolder().catch(() => {});
+    }
+
+    document.querySelectorAll("[data-page]").forEach(button => {
+      button.addEventListener("click", () => navigate(button.dataset.page));
+    });
+
+    document.querySelectorAll("[data-goto]").forEach(button => {
+      button.addEventListener("click", () => navigate(button.dataset.goto));
+    });
+
+    $("mobileMenuButton").addEventListener("click", () => {
+      $("sidebar").classList.toggle("open");
+    });
+
+    $("oneDriveSearch").addEventListener("input", renderOneDrive);
+
+    $("goRoot").addEventListener("click", () => {
+      loadCurrentFolder(null, "OneDrive", []).catch(() => {});
+    });
+
+    $("refreshOneDrive").addEventListener("click", () => {
+      loadCurrentFolder().catch(() => {});
+    });
+
+    /* ==========================================================
+       LOGIN DAN LOGOUT
+       ========================================================== */
+
+    $("loginMicrosoft").addEventListener("click", async () => {
+      $("loginMicrosoft").disabled = true;
+      $("loginMicrosoft").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...';
+      showStatus("loginStatus", "Menghubungkan ke Microsoft...");
+
+      try {
+        if (!msalApp) {
+          msalApp = new msal.PublicClientApplication(msalConfig);
+          await msalApp.initialize();
+        }
+
+        const response = await msalApp.loginPopup({
+          scopes: SCOPES,
+          prompt: "select_account"
+        });
+
+        account = response.account;
+        msalApp.setActiveAccount(account);
+        accessToken = response.accessToken || null;
+
+        await getToken();
+        await enterApp();
+        showStatus("loginStatus", "");
+      } catch (error) {
+        console.error(error);
+        showLogin(error.message || "Login gagal. Silakan coba kembali.");
+      }
+    });
+
+    async function logoutMicrosoft() {
+      try {
+        const oldAccount = account || msalApp?.getActiveAccount();
+        accessToken = null;
+        account = null;
+
+        $("appScreen").classList.add("hidden");
+        $("loginScreen").classList.remove("hidden");
+
+        if (msalApp && oldAccount) {
+          await msalApp.logoutPopup({
+            account: oldAccount,
+            postLogoutRedirectUri: window.location.origin + window.location.pathname
+          });
+        }
+
+        driveItems = [];
+        selectedFiles = [];
+        currentFolderId = null;
+        currentFolderName = "OneDrive";
+        currentFolderPath = [];
+        uploadTargetId = null;
+        uploadTargetName = "OneDrive";
+        pickerFolderId = null;
+        pickerFolderName = "OneDrive";
+        pickerFolderPath = [];
+
+        renderSelectedFiles();
+        $("selectedFolder").textContent = "OneDrive (folder utama)";
+        showLogin("Kamu telah keluar dari akun Microsoft.");
+      } catch (error) {
+        console.error(error);
+        showLogin("Sesi aplikasi ditutup. Jika Microsoft masih terbuka, tutup jendela login tersebut.");
+      }
+    }
+
+    $("logoutMicrosoft").addEventListener("click", logoutMicrosoft);
+    $("settingsLogout").addEventListener("click", logoutMicrosoft);
+
+    /* ==========================================================
+       PEMILIHAN FOLDER UNTUK UNGGAHAN
+       ========================================================== */
+
+    function openFolderModal() {
+      pickerFolderId = null;
+      pickerFolderName = "OneDrive";
+      pickerFolderPath = [];
+      $("folderModal").classList.add("show");
+      loadPickerFolders();
+    }
+
+    async function loadPickerFolders(folderId = pickerFolderId, folderName = pickerFolderName, path = pickerFolderPath) {
+      pickerFolderId = folderId;
+      pickerFolderName = folderName;
+      pickerFolderPath = path;
+
+      $("folderPickerPath").textContent = path.length
+        ? "OneDrive / " + path.map(p => p.name).join(" / ")
+        : "OneDrive";
+
+      $("folderPickerList").innerHTML = `
+        <p class="text-sm text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat folder...</p>`;
+
+      try {
+        const items = (await getChildren(folderId))
+          .filter(item => item.folder)
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        $("folderPickerList").innerHTML = items.length
+          ? items.map(item => `
+              <button class="folder-row" data-picker-id="${escapeHTML(item.id)}" data-picker-name="${escapeHTML(item.name)}">
+                <i class="fa-solid fa-folder text-amber-500"></i>
+                <span class="flex-1 text-sm font-bold">${escapeHTML(item.name)}</span>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+              </button>
+            `).join("")
+          : `<p class="text-sm text-slate-400 py-4">Tidak ada subfolder di lokasi ini. Kamu tetap bisa memilih folder ini.</p>`;
+
+        $("folderPickerList").querySelectorAll("[data-picker-id]").forEach(button => {
+          button.addEventListener("click", () => {
+            const id = button.dataset.pickerId;
+            const name = button.dataset.pickerName;
+            loadPickerFolders(id, name, [...pickerFolderPath, { id, name }]);
+          });
+        });
+
+        showStatus("folderPickerStatus", "");
+      } catch (error) {
+        $("folderPickerList").innerHTML = "";
+        showStatus("folderPickerStatus", error.message, "error");
+      }
+    }
+
+    $("chooseFolderButton").addEventListener("click", openFolderModal);
+    $("closeFolderModal").addEventListener("click", () => $("folderModal").classList.remove("show"));
+
+    $("folderModal").addEventListener("click", event => {
+      if (event.target === $("folderModal")) $("folderModal").classList.remove("show");
+    });
+
+    $("folderPickerBack").addEventListener("click", () => {
+      loadPickerFolders(null, "OneDrive", []);
+    });
+
+    $("selectCurrentFolder").addEventListener("click", () => {
+      uploadTargetId = pickerFolderId;
+      uploadTargetName = pickerFolderPath.length
+        ? pickerFolderPath.map(p => p.name).join(" / ")
+        : "OneDrive";
+
+      $("selectedFolder").textContent = uploadTargetName;
+      $("folderModal").classList.remove("show");
+    });
+
+    /* ==========================================================
+       PEMILIHAN BERKAS DAN DRAG-AND-DROP
+       ========================================================== */
+
+    function addFiles(fileList) {
+      const incoming = Array.from(fileList || []);
+      for (const file of incoming) {
+        const exists = selectedFiles.some(
+          item => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified
+        );
+        if (!exists) selectedFiles.push(file);
+      }
+      renderSelectedFiles();
+    }
+
+    function renderSelectedFiles() {
+      const list = $("fileList");
+
+      if (!selectedFiles.length) {
+        list.innerHTML = '<p class="text-xs text-slate-400">Belum ada berkas yang dipilih.</p>';
+        return;
+      }
+
+      list.innerHTML = selectedFiles.map((file, index) => `
+        <div class="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
+          <span class="file-icon"><i class="fa-solid fa-file-lines"></i></span>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-xs font-bold">${escapeHTML(file.name)}</p>
+            <p class="mt-1 text-xs text-slate-400">${formatBytes(file.size)}</p>
+          </div>
+          <button type="button" class="btn" data-remove-file="${index}" aria-label="Hapus berkas">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      `).join("");
+
+      list.querySelectorAll("[data-remove-file]").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedFiles.splice(Number(button.dataset.removeFile), 1);
+          renderSelectedFiles();
+        });
+      });
+    }
+
+    $("fileInput").addEventListener("change", event => {
+      addFiles(event.target.files);
+      event.target.value = "";
+    });
+
+    $("clearFiles").addEventListener("click", () => {
+      selectedFiles = [];
+      renderSelectedFiles();
+      showStatus("uploadStatus", "");
+    });
+
+    const dropZone = $("uploadArea");
+
+    ["dragenter", "dragover"].forEach(eventName => {
+      dropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      dropZone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+      });
+    });
+
+    dropZone.addEventListener("drop", event => {
+      addFiles(event.dataTransfer.files);
+    });
+
+    /* ==========================================================
+       UNGGAH BERKAS KE ONEDRIVE
+       ========================================================== */
+
+    async function uploadSmallFile(file, parentId) {
+      const safeName = file.name.replace(/\//g, "_");
+      const url = parentId
+        ? `${GRAPH}/me/drive/items/${encodeURIComponent(parentId)}:/${encodeURIComponent(safeName)}:/content`
+        : `${GRAPH}/me/drive/root:/${encodeURIComponent(safeName)}:/content`;
+
+      return graphRequest(url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file
+      });
+    }
+
+    async function uploadLargeFile(file, parentId, progressCallback) {
+      const safeName = file.name.replace(/\//g, "_");
+      const url = parentId
+        ? `${GRAPH}/me/drive/items/${encodeURIComponent(parentId)}:/${encodeURIComponent(safeName)}:/createUploadSession`
+        : `${GRAPH}/me/drive/root:/${encodeURIComponent(safeName)}:/createUploadSession`;
+
+      const session = await graphRequest(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item: { "@microsoft.graph.conflictBehavior": "rename", name: safeName }
+        })
+      });
+
+      if (!session.uploadUrl) throw new Error("Microsoft tidak memberikan URL unggahan.");
+
+      // Ukuran potongan kelipatan 320 KiB.
+      const chunkSize = 10 * 320 * 1024;
+      let start = 0;
+      let uploadedItem = null;
+
+      while (start < file.size) {
+        const end = Math.min(start + chunkSize, file.size);
+        const chunk = file.slice(start, end);
+
+        const response = await fetch(session.uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Length": String(chunk.size),
+            "Content-Range": `bytes ${start}-${end - 1}/${file.size}`
+          },
+          body: chunk
+        });
+
+        if (!response.ok && response.status !== 202) {
+          let detail = "";
+          try {
+            const result = await response.json();
+            detail = result.error?.message || "";
+          } catch (_) {}
+          throw new Error(detail || `Unggah potongan gagal (${response.status}).`);
+        }
+
+        if (response.status === 200 || response.status === 201) {
+          uploadedItem = await response.json();
+        }
+
+        start = end;
+        progressCallback(Math.round(start / file.size * 100));
+      }
+
+      return uploadedItem;
+    }
+
+    async function uploadOneFile(file, parentId, progressCallback) {
+      // Upload sederhana untuk file sampai 4 MB.
+      if (file.size <= 4 * 1024 * 1024) {
+        progressCallback(30);
+        const result = await uploadSmallFile(file, parentId);
+        progressCallback(100);
+        return result;
+      }
+
+      return uploadLargeFile(file, parentId, progressCallback);
+    }
+
+    async function saveUploadHistory(data) {
+      if (!GAS_URL) return;
+
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "add",
+            nama: data.nama,
+            email: data.email,
+            keterangan: data.keterangan,
+            namaFile: data.namaFile,
+            folderTujuan: data.folderTujuan,
+            ukuranByte: data.ukuranByte,
+            status: data.status,
+            fileUrl: data.fileUrl,
+            fileId: data.fileId
+          })
+        });
+      } catch (error) {
+        console.warn("Riwayat tidak dapat dikirim ke Google Sheets:", error);
+      }
+    }
+
+    $("uploadForm").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (isUploading) return;
+
+      if (!selectedFiles.length) {
+        showStatus("uploadStatus", "Pilih setidaknya satu berkas terlebih dahulu.", "error");
+        return;
+      }
+
+      if (!account) {
+        showStatus("uploadStatus", "Sesi Microsoft tidak aktif. Silakan login kembali.", "error");
+        return;
+      }
+
+      isUploading = true;
+      const button = $("startUploadButton");
+      button.disabled = true;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...';
+
+      let successCount = 0;
+      const failures = [];
+
+      try {
+        await getToken();
+
+        for (const file of selectedFiles) {
+          showStatus("uploadStatus", `Mengunggah ${file.name}...`);
+
+          try {
+            const result = await uploadOneFile(file, uploadTargetId, percent => {
+              showStatus("uploadStatus", `Mengunggah ${file.name}: ${percent}%`);
+            });
+
+            successCount++;
+
+            await saveUploadHistory({
+              nama: account.name || account.username,
+              email: account.username || "",
+              keterangan: $("keterangan").value.trim(),
+              namaFile: file.name,
+              folderTujuan: uploadTargetName,
+              ukuranByte: file.size,
+              status: "Berhasil",
+              fileUrl: result?.webUrl || "",
+              fileId: result?.id || ""
+            });
+          } catch (error) {
+            failures.push(`${file.name}: ${error.message}`);
+
+            await saveUploadHistory({
+              nama: account.name || account.username,
+              email: account.username || "",
+              keterangan: $("keterangan").value.trim(),
+              namaFile: file.name,
+              folderTujuan: uploadTargetName,
+              ukuranByte: file.size,
+              status: "Gagal",
+              fileUrl: "",
+              fileId: ""
+            });
+          }
+        }
+
+        if (successCount > 0) {
+          selectedFiles = [];
+          renderSelectedFiles();
+          $("keterangan").value = "";
+          await loadCurrentFolder().catch(() => {});
+          await loadHistory();
+        }
+
+        if (failures.length) {
+          showStatus(
+            "uploadStatus",
+            `${successCount} berkas berhasil, ${failures.length} gagal. ${failures.join(" | ")}`,
+            "error"
+          );
+        } else {
+          showStatus("uploadStatus", `${successCount} berkas berhasil diunggah ke OneDrive.`, "success");
+        }
+      } catch (error) {
+        showStatus("uploadStatus", error.message || "Proses unggah gagal.", "error");
+      } finally {
+        isUploading = false;
+        button.disabled = false;
+        button.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Unggah ke OneDrive';
+      }
+    });
+
+    /* ==========================================================
+       RIWAYAT GOOGLE SHEETS
+       ========================================================== */
+
+    async function loadHistory() {
+      $("historyTableBody").innerHTML = `
+        <tr><td colspan="6" class="text-center text-slate-400 py-10">
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat riwayat...
+        </td></tr>`;
+
+      try {
+        const response = await fetch(GAS_URL + "?action=list", { method: "GET" });
+        if (!response.ok) throw new Error("Gagal mengambil data riwayat.");
+
+        const result = await response.json();
+        if (result.success === false) throw new Error(result.message || "Google Sheets mengembalikan kesalahan.");
+
+        const rows = Array.isArray(result.data) ? result.data : [];
+
+        const today = new Date().toLocaleDateString("id-ID");
+        const todayCount = rows.filter(row => {
+          if (!row.waktu) return false;
+          const date = new Date(row.waktu);
+          return !Number.isNaN(date.getTime()) && date.toLocaleDateString("id-ID") === today;
+        }).length;
+
+        $("dashboardUploadsToday").textContent = todayCount;
+
+        if (!rows.length) {
+          $("historyTableBody").innerHTML = `
+            <tr><td colspan="6" class="text-center text-slate-400 py-10">Belum ada riwayat unggahan.</td></tr>`;
+          showStatus("historyStatus", "Data riwayat berhasil dimuat.", "success");
+          return;
+        }
+
+        $("historyTableBody").innerHTML = rows.slice().reverse().map(row => `
+          <tr>
+            <td class="whitespace-nowrap">${escapeHTML(row.waktu || "—")}</td>
+            <td>${escapeHTML(row.nama || "—")}</td>
+            <td class="break-all">${escapeHTML(row.namaFile || "—")}</td>
+            <td>${escapeHTML(row.folderTujuan || "—")}</td>
+            <td>
+              <span class="badge" style="${row.status === "Gagal" ? "background:#fdecec;color:#b42318" : ""}">
+                ${escapeHTML(row.status || "—")}
+              </span>
+            </td>
+            <td>
+              ${row.fileUrl
+                ? `<a class="font-bold text-blue-600" href="${escapeHTML(row.fileUrl)}" target="_blank" rel="noopener noreferrer">Buka</a>`
+                : "—"}
+            </td>
+          </tr>
+        `).join("");
+
+        showStatus("historyStatus", `${rows.length} catatan ditemukan.`, "success");
+      } catch (error) {
+        $("historyTableBody").innerHTML = `
+          <tr><td colspan="6" class="text-center text-red-500 py-10">
+            ${escapeHTML(error.message)}<br>
+            <span class="text-xs text-slate-400">Pastikan Web App Google Apps Script sudah dideploy dan dapat diakses.</span>
+          </td></tr>`;
+        showStatus("historyStatus", "Riwayat tidak dapat dimuat.", "error");
+      }
+    }
+
+    $("refreshHistory").addEventListener("click", loadHistory);
+
+    /* Mulai aplikasi */
+    initializeMsal().catch(error => {
+      console.error(error);
+      showLogin(error.message || "Aplikasi gagal diinisialisasi.");
+    });
+  </script>
+</body>
+</html>
